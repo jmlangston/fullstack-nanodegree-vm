@@ -8,7 +8,9 @@ anything yet. --> Add markup for links to the for loop that adds restaurant name
 goes to another page where user can enter new restaurant name; new restaurant will
 appear in the restaurant list. --> Add new if block to do_GET (/restaurants/new)
 and new block to do_POST that handles adding new entry to database
-4.
+4. Add capability to edit the name of a specific restaurant. Use URL restaurants/<id>/edit
+--> Set href for 'Edit' anchor tag; show new page with form for editing name; update
+name in database with POST request; redirect to main /restaurants/ page
 5.
 """
 
@@ -43,7 +45,7 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output += "<a href='/restaurants/new'>Make a new restaurant here</a><br><br>"
                 for restaurant in restaurants:
                     output += restaurant.name + "<br>"
-                    output += "<a href='#'>Edit</a><br>"
+                    output += "<a href='/restaurants/%s/edit'>Edit</a><br>" % restaurant.id
                     output += "<a href='#'>Delete</a><br><br>"
                 output += "</html></body>"
 
@@ -62,6 +64,26 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/new'>"
                 output += "<input name='newRestaurantName' type='text' placeholder='New restaurant name'>"
                 output += "<input type='submit' value='Create'></form>"
+                output += "</html></body>"
+
+                self.wfile.write(output)
+                print output
+                return
+
+            if self.path.endswith("/edit"):
+
+                restaurant_id = self.path.split("/")[2]
+                restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                output = "<html><body>"
+                output += "<h1>%s</h1>" % restaurant.name
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/%s/edit'>" % restaurant.id
+                output += "<input name='updatedName' type='text' placeholder='%s'>" % restaurant.name
+                output += "<input type='submit' value='Rename'></form>"
                 output += "</html></body>"
 
                 self.wfile.write(output)
@@ -117,10 +139,31 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
+
+            if self.path.endswith('/edit'):
+                ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+                if ctype == 'multipart/form-data':
+                    fields = cgi.parse_multipart(self.rfile, pdict)
+                messagecontent = fields.get('updatedName')
+
+                restaurant_id = self.path.split("/")[2]
+                restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+
+                restaurant.name = messagecontent[0]
+                session.add(restaurant)
+                session.commit()
+
+                self.send_response(301)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Location', '/restaurants') # redirect
+                self.end_headers()
+                return
+
+
             if self.path.endswith('/hello'):
                 self.send_response(301)
                 self.end_headers()
-                
+
                 ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
                 if ctype == 'multipart/form-data':
                     fields = cgi.parse_multipart(self.rfile, pdict)
