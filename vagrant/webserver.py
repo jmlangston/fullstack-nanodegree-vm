@@ -11,7 +11,9 @@ and new block to do_POST that handles adding new entry to database
 4. Add capability to edit the name of a specific restaurant. Use URL restaurants/<id>/edit
 --> Set href for 'Edit' anchor tag; show new page with form for editing name; update
 name in database with POST request; redirect to main /restaurants/ page
-5.
+5. Add capability to delete a restaurant. --> Set href for 'Delete' anchor tag;
+show confirmation page; delete entry from database; redirect to main /restaurants/
+page.
 """
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
@@ -46,7 +48,7 @@ class webserverHandler(BaseHTTPRequestHandler):
                 for restaurant in restaurants:
                     output += restaurant.name + "<br>"
                     output += "<a href='/restaurants/%s/edit'>Edit</a><br>" % restaurant.id
-                    output += "<a href='#'>Delete</a><br><br>"
+                    output += "<a href='/restaurants/%s/delete'>Delete</a><br><br>" % restaurant.id
                 output += "</html></body>"
 
                 self.wfile.write(output)
@@ -89,6 +91,25 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.wfile.write(output)
                 print output
                 return
+
+            if self.path.endswith("/delete"):
+                restaurant_id = self.path.split("/")[2]
+                restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                output = "<html><body>"
+                output += "<h1>Are you sure you want to delete %s?</h1>" % restaurant.name
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/%s/delete'>" % restaurant.id
+                output += "<input type='submit' value='Delete'></form>"
+                output += "</html></body>"
+
+                self.wfile.write(output)
+                print output
+                return
+
 
             if self.path.endswith("/hello"):
                 self.send_response(200)
@@ -159,6 +180,18 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
+
+            if self.path.endswith('/delete'):
+                restaurant_id = self.path.split("/")[2]
+                restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+                session.delete(restaurant)
+                session.commit()
+
+                self.send_response(301)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+                return
 
             if self.path.endswith('/hello'):
                 self.send_response(301)
