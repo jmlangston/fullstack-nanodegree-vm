@@ -1,0 +1,35 @@
+body {
+    font-family: 'georgia', sans-serif;
+    background-color: #FFB4AD;
+}
+
+h1 {
+    color: #7F3730;
+    text-align: center;
+    border-bottom: 1px solid #7F3730;
+}
+
+a {
+    text-decoration: none;
+    color: #7F5A56;
+}
+
+a:visited {
+    color: #7F5A56;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a:active {
+    color: purple;
+}
+
+.pane {
+    width: 50%;
+    margin: auto;
+    border: 1.5px solid #7F3730;
+    border-radius: 10px;
+    padding: 10px;
+}
